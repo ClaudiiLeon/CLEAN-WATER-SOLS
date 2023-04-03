@@ -1,1 +1,44 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include "sensors.h"
+
+// GPIO where the DS18B20 is connected to
+const int oneWireBus = 4;
+
+// Setup a oneWire instance to communicate with any OneWire devices
+OneWire oneWire(oneWireBus);
+
+// Pass our oneWire reference to Dallas Temperature sensor 
+DallasTemperature sensors(&oneWire);
+
+// Variables for calibration of temperature sensor **UPDATE THESE NUMBERS
+float rawHigh = 99.6 ;
+float rawLow = 0.5 ;
+float referenceHigh = 99.9;
+float referenceLow = 0; 
+float rawRange = rawHigh - rawLow; 
+float referenceRange = referenceHigh - referenceLow;
+
+void temp_setup() {
+  // Start the Serial Monitor
+  Serial.begin(115200);
+  // Start the DS18B20 sensor
+  sensors.begin();
+}
+
+void temp_loop() {
+  float temperature = read_calibrated_temperature();
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" C");
+}
+
+float read_calibrated_temperature() {
+  sensors.requestTemperatures();
+  float rawTempValue = sensors.getTempCByIndex(0);
+
+  // calibration of temperature sensor
+  float calibratedValue = (((rawTempValue - rawLow) * referenceRange) / rawRange) + referenceLow;
+  return calibratedValue;
+}
 
