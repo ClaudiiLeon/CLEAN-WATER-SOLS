@@ -1,1 +1,105 @@
+#include <LiquidCrystal_I2C.h>
+#include "sensors.h"
 
+// set the LCD number of columns and rows
+int lcdColumns = 20;
+int lcdRows = 4;
+
+// set LCD address, number of columns and rows
+// if you don't know your display address, run an I2C scanner sketch
+LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);  
+
+// LCD column positions
+const int TDS_COLUMN = 0;
+const int TDS_VALUE_COLUMN = 7;
+const int TDS_UNIT_COLUMN = 13;
+const int TEMP_COLUMN = 0;
+const int TEMP_VALUE_COLUMN = 6;
+const int TEMP_UNIT_COLUMN = 13;
+const int PH_COLUMN = 0;
+const int PH_VALUE_COLUMN = 8;
+
+void setup(){
+
+  temp_setup();
+  pH_setup();
+  TDS_setup();
+  // initialize LCD
+  lcd.init();
+  // turn on LCD backlight                      
+  lcd.backlight();
+  lcd.clear();
+  
+  lcd.setCursor (TDS_COLUMN,0);
+  lcd.print("TDS:");
+  lcd.setCursor(TDS_UNIT_COLUMN,0);
+  lcd.print("ppm");
+
+  lcd.setCursor(TEMP_COLUMN,1);
+  lcd.print("Temp:");
+  lcd.setCursor(TEMP_UNIT_COLUMN,1);
+  lcd.print("Celsius");
+
+  lcd.setCursor(PH_COLUMN,2);
+  lcd.print("pH:");
+  
+}
+
+void loop(){
+
+  temp_loop();
+  pH_loop();
+  
+  //******TDS value changes very slowly compared to other values 
+  // print TDS value
+  lcd.setCursor(TDS_VALUE_COLUMN, 0);
+  lcd.print("      "); // clear previous tds value
+
+  float tds_value = TDS_loop();
+  char tds_str[10];
+  dtostrf(tds_value, 4, 0, tds_str); // convert to character array with 2 decimal places
+  int tds_last_digit_pos = TDS_VALUE_COLUMN + 5; // position of last digit wanting to print
+  int tds_str_len = strlen(tds_str);
+  int tds_cursor_pos = tds_last_digit_pos - tds_str_len; // position to set the cursor
+  lcd.setCursor(tds_cursor_pos, 0);
+  lcd.print(tds_str);
+  
+
+  Serial.print("TDS Value:");
+  Serial.print(tds_value,0);
+  Serial.println("ppm");
+
+  // print pH measurement
+  lcd.setCursor(PH_VALUE_COLUMN, 2);
+  lcd.print("      "); // clear previous pH value
+  
+  float pH_value = read_pH();
+
+  char pH_str[10];
+  dtostrf(pH_value, 4, 2, pH_str); // convert to character array with 2 decimal places
+  int pH_last_digit_pos = PH_VALUE_COLUMN + 4; // position of last digit wanting to print
+  int pH_str_len = strlen(pH_str);
+  int pH_cursor_pos = pH_last_digit_pos - pH_str_len; // position to set the cursor
+  lcd.setCursor(pH_cursor_pos, 2);
+  lcd.print(pH_str);
+  
+
+  Serial.print("pH: ");
+  Serial.println(pH_value,2);
+
+  // print temp measurement
+  lcd.setCursor(TEMP_VALUE_COLUMN, 1);
+  lcd.print("       "); // clear previous temperature value
+  
+  float temp_value = read_calibrated_temperature();
+  char temp_str[10];
+  dtostrf(temp_value, 4, 2, temp_str); // convert to character array with 2 decimal places
+
+  // print temperature measurement
+  int last_digit_pos = TEMP_VALUE_COLUMN + 6; // position of last digit wanting to print
+  int temp_str_len = strlen(temp_str);
+  int cursor_pos = last_digit_pos - temp_str_len; // position to set the cursor
+  lcd.setCursor(cursor_pos, 1);
+  lcd.print(temp_str);
+
+}
