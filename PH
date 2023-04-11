@@ -1,0 +1,49 @@
+
+#include "DFRobot_ESP_PH.h"
+#include "EEPROM.h"
+#include "sensors.h"
+
+DFRobot_ESP_PH ph;
+#define ESPADC 4096.0   //the esp Analog Digital Convertion value
+#define ESPVOLTAGE 3300 //the esp voltage supply value
+#define PH_PIN 35		//the esp gpio data pin number
+float voltage, phValue, temperature;
+
+void pH_setup()
+{
+	Serial.begin(115200);
+	EEPROM.begin(32);//needed to permit storage of calibration value in eeprom
+	ph.begin();
+
+
+}
+
+// Function to read the pH value
+float read_pH()
+{
+	//voltage = rawPinValue / esp32ADC * esp32Vin
+	voltage = analogRead(PH_PIN) / ESPADC * ESPVOLTAGE; // read the voltage
+		
+	// read your temperature sensor to execute temperature compensation
+	temperature = read_calibrated_temperature();  
+		
+	phValue = ph.readPH(voltage, temperature); // convert voltage to pH with temperature compensation
+	
+	return phValue; // return the pH value
+}
+
+void pH_loop()
+{
+	static unsigned long timepoint = millis();
+	if (millis() - timepoint > 1000U) //time interval: 1s
+	{
+		timepoint = millis();
+		
+		Serial.print("pH:");
+		Serial.println(read_pH(), 4);
+    Serial.print("temperature :");
+    Serial.println(temperature);
+	}
+	
+	ph.calibration(voltage, temperature); // calibration process by Serail CMD
+}

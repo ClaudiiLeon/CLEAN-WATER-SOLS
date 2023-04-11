@@ -1,7 +1,9 @@
+// Original source code: https://wiki.keyestudio.com/KS0429_keyestudio_TDS_Meter_V1.0#Test_Code
+// Project details: https://RandomNerdTutorials.com/esp32-tds-water-quality-sensor/
+
 #define TdsSensorPin 27
 #define VREF 3.3              // analog reference voltage(Volt) of the ADC
 #define SCOUNT  30            // sum of sample point
-#include "sensors.h"
 
 int analogBuffer[SCOUNT];     // store the analog value in the array, read from ADC
 int analogBufferTemp[SCOUNT];
@@ -10,8 +12,7 @@ int copyIndex = 0;
 
 float averageVoltage = 0;
 float tdsValue = 0;
-// Having trouble getting value for temp from header file
-float tds_temperature = 25;       // current temperature for compensation
+float temperature = 25;       // current temperature for compensation
 
 // median filtering algorithm
 int getMedianNum(int bArray[], int iFilterLen){
@@ -37,13 +38,12 @@ int getMedianNum(int bArray[], int iFilterLen){
   return bTemp;
 }
 
-void TDS_setup(){
+void setup(){
   Serial.begin(115200);
-  //float tds_temperature = read_calibrated_temperature();       // current temperature for compensation
   pinMode(TdsSensorPin,INPUT);
 }
 
-float TDS_loop(){
+void loop(){
   static unsigned long analogSampleTimepoint = millis();
   if(millis()-analogSampleTimepoint > 40U){     //every 40 milliseconds,read the analog value from the ADC
     analogSampleTimepoint = millis();
@@ -64,7 +64,7 @@ float TDS_loop(){
       averageVoltage = getMedianNum(analogBufferTemp,SCOUNT) * (float)VREF / 4096.0;
       
       //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0)); 
-      float compensationCoefficient = 1.0+0.02*(tds_temperature-25.0);
+      float compensationCoefficient = 1.0+0.02*(temperature-25.0);
       //temperature compensation
       float compensationVoltage=averageVoltage/compensationCoefficient;
       
@@ -74,9 +74,9 @@ float TDS_loop(){
       //Serial.print("voltage:");
       //Serial.print(averageVoltage,2);
       //Serial.print("V   ");
-        
+      Serial.print("TDS Value:");
+      Serial.print(tdsValue,0);
+      Serial.println("ppm");
     }
-    return tdsValue;
   }
-  
 }
