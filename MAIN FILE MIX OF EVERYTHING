@@ -19,6 +19,42 @@ const int TEMP_UNIT_COLUMN = 13;
 const int PH_COLUMN = 0;
 const int PH_VALUE_COLUMN = 8;
 
+//pH and TDS min /max values
+const int PH_MIN = 7;  
+const int PH_MAX = 10.5;
+const int TDS_MAX_EXCELLENT = 200; // < 200 is excellent drinking water
+const int TDS_MAX_ACCEPTABLE = 500; // from 200 - 500 = acceptable (average tap water) past that is unacceptable
+
+void range_check(float pH_value, float tds_value){
+  lcd.setCursor(0,3);
+  lcd.print("                    ");
+  lcd.setCursor(0,3);
+  
+  if ((pH_value >= PH_MIN) && (pH_value < PH_MAX)) {
+    if (tds_value <= TDS_MAX_EXCELLENT) {
+      lcd.print("PH & TDS = ideal");
+    } else if ((tds_value >= TDS_MAX_EXCELLENT) && (tds_value <= TDS_MAX_ACCEPTABLE)) {
+      lcd.print("H2O = acceptable");
+    }
+  } else if ((pH_value < PH_MIN)) {
+    if (tds_value <= TDS_MAX_EXCELLENT) {
+      lcd.print("TDS= ideal pH= :( ");
+    } else if ((tds_value >= TDS_MAX_EXCELLENT) && (tds_value <= TDS_MAX_EXCELLENT)) {
+      lcd.print("TDS = OK pH= :(");
+    } else if ((tds_value >= TDS_MAX_ACCEPTABLE)){
+      lcd.print("PH & TDS = :( ");
+    }
+  } else if(pH_value > PH_MAX) {
+    if (tds_value <= TDS_MAX_EXCELLENT) {
+      lcd.print("TDS= ideal pH= :( ");
+    } else if ((tds_value >= TDS_MAX_EXCELLENT) && (tds_value <= TDS_MAX_ACCEPTABLE)) {
+      lcd.print("TDS = OK pH= :( ");
+    } else if ((tds_value >= TDS_MAX_ACCEPTABLE)){
+      lcd.print("PH & TDS unacceptable");
+    }
+  } 
+}
+
 void setup(){
 
   temp_setup();
